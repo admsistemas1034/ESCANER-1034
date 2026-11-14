@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Escáner Club 1034</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0e1a24">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Escáner 1034">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Herramienta de piso: visor de cámara arriba (siempre oscuro), ficha del producto abajo con cifras tabulares */
+:root {
+  --bg: #eef2f5; --panel: #ffffff; --fg: #142230; --muted: #5a6b7b; --line: #d6dee6;
+  --accent: #0f7a8c; --ok: #157a3f; --bad: #c0352b; --cam: #0b141c; --chip: #e3eef1;
+  --f-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --f-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0b141c; --panel: #13202b; --fg: #e5edf3; --muted: #93a5b5; --line: #24364a;
+  --accent: #3fb6c8; --ok: #49c67c; --bad: #f2776b; --cam: #05090d; --chip: #18303a; color-scheme: dark } }
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.45 var(--f-body); font-variant-numeric: tabular-nums;
+  padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); }
+.wrap { max-width: 34rem; margin: 0 auto; padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); padding-block: 10px 28px; display: flex; flex-direction: column; gap: 12px; }
+header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+h1 { font: 600 1.2rem/1.2 var(--f-display); margin: 0; letter-spacing: -0.01em; }
+.corte { color: var(--muted); font-size: 0.8rem; white-space: nowrap; }
+.cam { position: relative; background: var(--cam); border-radius: 14px; overflow: hidden; aspect-ratio: 4 / 3; max-width: 100%; }
+.cam video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.aim { position: absolute; left: 8%; right: 8%; top: 30%; bottom: 30%; border: 2px solid rgba(255,255,255,.9); border-radius: 10px; box-shadow: 0 0 0 999px rgba(0,0,0,.38); pointer-events: none; transition: border-color .15s; }
+.aim::after { content: ""; position: absolute; left: 5%; right: 5%; top: 50%; height: 2px; background: #ff5a4f; animation: sweep 1.5s ease-in-out infinite alternate; }
+.cam.hit .aim { border-color: #4be08a; }
+.cam.off .aim, .cam.off .aim::after { display: none; }
+@keyframes sweep { from { transform: translateY(-22px); } to { transform: translateY(22px); } }
+@media (prefers-reduced-motion: reduce) { .aim::after { animation: none; } }
+.camover { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #dfe8ee; text-align: center; padding: 18px; }
+.camtip { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; color: #e9f1f5; font-size: 0.8rem; text-shadow: 0 1px 2px #000; }
+.camtools { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; }
+button { font: 500 0.95rem var(--f-body); border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); padding: 10px 14px; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.camtools button { background: rgba(0,0,0,.55); color: #fff; border-color: rgba(255,255,255,.3); padding: 6px 10px; font-size: 0.8rem; }
+.manual { display: flex; gap: 8px; }
+.manual input { flex: 1; min-width: 0; font: 16px var(--f-body); padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); }
+.msg { font-size: 0.85rem; color: var(--muted); margin: 0; }
+.msg.bad { color: var(--bad); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.pname { font: 600 1.1rem/1.25 var(--f-display); margin: 0; text-wrap: balance; }
+.pcode { color: var(--muted); font-size: 0.82rem; }
+.path { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { background: var(--chip); border-radius: 999px; padding: 3px 9px; font-size: 0.75rem; }
+.chip b { font-weight: 600; color: var(--muted); margin-right: 4px; text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.66rem; }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 8px; }
+.kv { display: flex; flex-direction: column; min-width: 0; }
+.kv .v { font: 600 1.02rem/1.2 var(--f-display); overflow-wrap: anywhere; }
+.kv .l { color: var(--muted); font-size: 0.72rem; }
+.pos { color: var(--ok); } .neg { color: var(--bad); }
+.note { color: var(--muted); font-size: 0.75rem; margin: 0; }
+h2 { font: 600 0.95rem var(--f-display); margin: 0; }
+.tw { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.82rem; }
+th, td { text-align: right; padding: 6px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; white-space: normal; min-width: 8rem; }
+th { color: var(--muted); font-weight: 500; font-size: 0.72rem; }
+td small { display: block; color: var(--muted); font-size: 0.68rem; }
+.actions { display: flex; gap: 8px; }
+.actions button { flex: 1; }
+@media (max-width: 360px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>Escáner Club 1034</h1><span class="corte" id="corte">Cargando datos…</span></header>
+
+  <div class="cam off" id="cam">
+    <video id="video" playsinline muted autoplay></video>
+    <div class="aim"></div>
+    <div class="camover" id="camover">
+      <p style="margin:0">Apunta al código de barras y se lee solo.</p>
+      <button class="primary" id="start" type="button">Abrir cámara</button>
+    </div>
+    <div class="camtools"><button id="torch" type="button" hidden aria-pressed="false">Linterna</button><button id="stop" type="button" hidden>Pausar</button></div>
+    <div class="camtip" id="camtip" hidden>Mantén el código dentro del recuadro</div>
+  </div>
+
+  <form class="manual" id="manual">
+    <input id="q" inputmode="numeric" autocomplete="off" placeholder="O escribe el código" aria-label="Código de barras">
+    <button type="submit">Buscar</button>
+  </form>
+  <p class="msg" id="msg" role="status"></p>
+
+  <section class="card" id="ficha" hidden>
+    <div>
+      <p class="pname" id="pname"></p>
+      <span class="pcode" id="pcode"></span>
+    </div>
+    <div class="path" id="ppath"></div>
+    <div class="grid" id="pgrid"></div>
+    <p class="note" id="pnote"></p>
+    <h2>Niveles a los que pertenece</h2>
+    <div class="tw"><table><thead><tr><th>Nivel</th><th>Venta</th><th>Alcance</th><th>ITI real</th><th>Inv. costo</th></tr></thead><tbody id="plev"></tbody></table></div>
+    <div class="actions"><button class="primary" id="again" type="button">Escanear otro</button></div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const LV = ['Total', 'División', 'Gerencia', 'Categoría', 'Subcategoría', 'Material'];
+  const nf = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 0 });
+  const nf1 = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 1 });
+  const money = (v) => (v == null ? '—' : (v < 0 ? '−$' : '$') + nf.format(Math.abs(v)));
+  const pct = (v) => (v == null ? '—' : nf1.format(v * 100) + '%');
+  const spct = (v) => (v == null ? '—' : (v > 0 ? '+' : v < 0 ? '−' : '') + nf1.format(Math.abs(v) * 100) + '%');
+  const tone = (v) => (v == null ? '' : v > 0 ? 'pos' : v < 0 ? 'neg' : '');
+  const toneAlc = (v) => (v == null ? '' : v >= 1 ? 'pos' : 'neg');
+  const clean = (v) => String(v || '').trim().replace(/\s+/g, '').replace(/^0+(?=\d)/, '');
+
+  // ---------- datos ----------
+  let BY = null, BYCODE = null;
+  const load = async () => {
+    try {
+      const r = await fetch('niveles.json?t=' + Date.now(), { cache: 'no-store' });
+      const j = await r.json();
+      const F = j.meta.campos; BY = new Map(); BYCODE = new Map();
+      j.rows.forEach((a) => { const o = {}; F.forEach((f, i) => { o[f] = a[i]; }); BY.set(o.id, o); if (o.nivel === 5) BYCODE.set(String(o.codigo), o); });
+      const d = j.meta.corte ? new Date(j.meta.corte + 'T12:00:00') : null;
+      $('corte').textContent = d ? 'Datos al ' + d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : '';
+    } catch (e) { $('corte').textContent = 'Sin datos'; say('No se pudieron cargar los datos. Revisa la conexión y vuelve a abrir.', true); }
+  };
+  const say = (t, bad) => { $('msg').textContent = t || ''; $('msg').classList.toggle('bad', !!bad); };
+
+  // ---------- ficha ----------
+  const kv = (l, v, cls) => `<div class="kv"><span class="v ${cls || ''}">${v}</span><span class="l">${l}</span></div>`;
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const show = (code) => {
+    if (!BYCODE) { say('Los datos todavía se están cargando.'); return false; }
+    const m = BYCODE.get(code) || BYCODE.get(code.replace(/^0+/, ''));
+    if (!m) { say('El código ' + code + ' no está en el archivo de este mes (sin venta, ppto ni inventario).', true); $('ficha').hidden = true; return false; }
+    say('');
+    $('pname').textContent = m.nombre; $('pcode').textContent = 'Código ' + m.codigo;
+    const chain = []; let p = m.padre ? BY.get(m.padre) : null;
+    while (p && p.nivel > 0) { chain.unshift(p); p = p.padre ? BY.get(p.padre) : null; }
+    const div = chain.find((x) => x.nivel === 1);
+    if (!div && chain.length) { const top = BY.get(chain[0].id.slice(0, 5)); if (top) chain.unshift(top); }
+    $('ppath').innerHTML = chain.map((x) => `<span class="chip"><b>${LV[x.nivel]}</b>${esc(x.nombre)}</span>`).join('');
+    const itiR = m.iti_real != null ? m.iti_real : m.iti_mes, itiN = m.iti_nom != null ? m.iti_nom : m.iti_mes_nom;
+    const alt = m.iti_real == null && m.iti_mes != null;
+    const uom = m.uom || 'pzas';
+    $('pgrid').innerHTML = [
+      kv('Venta del mes', money(m.venta)), kv('Ppto', m.ppto ? money(m.ppto) : 'Sin ppto'), kv('Alcance', pct(m.alcance), toneAlc(m.alcance)),
+      kv('ITI real' + (alt ? ' *' : ''), itiR == null ? 'Sin venta AA' : spct(itiR), tone(itiR)),
+      kv('ITI nominal' + (alt ? ' *' : ''), itiN == null ? 'Sin venta AA' : spct(itiN), tone(itiN)),
+      kv('Venta año anterior', money(m.venta_aa != null ? m.venta_aa : null)),
+      kv('Unidades', m.unidades == null ? '—' : nf1.format(m.unidades) + ' ' + uom),
+      kv('Promedio diario', money(m.prom_dia)), kv('Prom. diario ' + uom, m.prom_uni == null ? '—' : nf1.format(m.prom_uni)),
+      kv('Inventario costo', money(m.inv_costo)), kv('Días inventario', m.dias_inv == null ? '—' : nf.format(m.dias_inv)),
+      kv('Margen', pct(m.margen), tone(m.margen)),
+    ].join('');
+    const notes = [];
+    if (alt) notes.push('* Sin venta el año pasado en los mismos días: ITI contra el promedio diario de todo el mes del año pasado.');
+    if (m.aa_mes) notes.push('Venta del mes completo del año pasado: ' + money(m.aa_mes) + '.');
+    if (m.part_club != null) notes.push('Participación en la venta del club: ' + pct(m.part_club) + '.');
+    $('pnote').textContent = notes.join(' ');
+    $('plev').innerHTML = chain.map((x) => `<tr><td>${esc(x.nombre)}<small>${LV[x.nivel]}</small></td><td>${money(x.venta)}</td><td class="${toneAlc(x.alcance)}">${pct(x.alcance)}</td><td class="${tone(x.iti_real)}">${spct(x.iti_real)}</td><td>${money(x.inv_costo)}</td></tr>`).join('');
+    $('ficha').hidden = false;
+    $('ficha').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return true;
+  };
+
+  // ---------- lector ----------
+  const WANT = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf', 'codabar'];
+  let det = null;
+  const loadZX = () => new Promise((res, rej) => {
+    if (window.ZXing) return res(window.ZXing);
+    const s = document.createElement('script'); s.src = 'zxing.min.js';
+    s.onload = () => (window.ZXing ? res(window.ZXing) : rej()); s.onerror = rej; document.head.appendChild(s);
+  });
+  const zx = async () => {
+    const Z = await loadZX(); const F = Z.BarcodeFormat; const hints = new Map();
+    hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E, F.CODE_128, F.CODE_39, F.ITF, F.CODABAR]);
+    hints.set(Z.DecodeHintType.TRY_HARDER, true);
+    const rd = new Z.MultiFormatReader(); rd.setHints(hints);
+    const cv = document.createElement('canvas'); const cx = cv.getContext('2d', { willReadFrequently: true });
+    return { detect: async (v) => {
+      const w = v.videoWidth, h = v.videoHeight; if (!w || !h) return [];
+      const sw = w * 0.84, sh = h * 0.4, k = Math.min(1, 900 / sw);
+      cv.width = Math.round(sw * k); cv.height = Math.round(sh * k);
+      cx.drawImage(v, (w - sw) / 2, (h - sh) / 2, sw, sh, 0, 0, cv.width, cv.height);
+      try { const r = rd.decode(new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(cv)))); return [{ rawValue: r.getText() }]; }
+      catch (e) { return []; } finally { rd.reset(); }
+    } };
+  };
+  const getDet = async () => {
+    if (det) return det;
+    if ('BarcodeDetector' in window) {
+      try { const have = await BarcodeDetector.getSupportedFormats(); const f = WANT.filter((x) => have.includes(x)); if (f.length) return (det = new BarcodeDetector({ formats: f })); } catch (e) {}
+    }
+    return (det = await zx());
+  };
+
+  const S = { stream: null, timer: 0, last: '', hits: 0, busy: false, torch: false };
+  const camUi = (on) => {
+    $('cam').classList.toggle('off', !on); $('cam').classList.remove('hit');
+    $('camover').hidden = on; $('stop').hidden = !on; $('camtip').hidden = !on;
+    if (!on) $('torch').hidden = true;
+  };
+  const stop = () => {
+    clearTimeout(S.timer); if (S.stream) S.stream.getTracks().forEach((t) => t.stop());
+    S.stream = null; S.last = ''; S.hits = 0; S.torch = false; $('video').srcObject = null; camUi(false);
+  };
+  const tick = async () => {
+    const v = $('video'); if (!S.stream) return;
+    if (v.readyState >= 2 && !S.busy) {
+      S.busy = true;
+      try {
+        const c = await det.detect(v); const raw = c.length ? clean(c[0].rawValue) : '';
+        if (raw) {
+          S.hits = raw === S.last ? S.hits + 1 : 1; S.last = raw;
+          if (S.hits >= 2) {
+            $('cam').classList.add('hit'); try { navigator.vibrate && navigator.vibrate(80); } catch (e) {}
+            S.busy = false; $('q').value = raw;
+            setTimeout(() => { stop(); show(raw); }, 200); return;
+          }
+        }
+      } catch (e) {}
+      S.busy = false;
+    }
+    S.timer = setTimeout(tick, 110);
+  };
+  const start = async () => {
+    say('');
+    try { await getDet(); } catch (e) { say('No se pudo cargar el lector de códigos.', true); return; }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { say('Este navegador no permite usar la cámara. Abre la app en Safari o Chrome.', true); return; }
+    try { S.stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } }); }
+    catch (e) { say(e && e.name === 'NotAllowedError' ? 'Permiso de cámara negado. Actívalo en Ajustes del teléfono para este sitio y vuelve a intentar.' : 'No se pudo abrir la cámara.', true); return; }
+    const tr = S.stream.getVideoTracks()[0];
+    try {
+      const caps = tr.getCapabilities ? tr.getCapabilities() : {};
+      if (caps.focusMode && caps.focusMode.includes('continuous')) await tr.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+      $('torch').hidden = !caps.torch;
+    } catch (e) {}
+    const v = $('video'); v.srcObject = S.stream; try { await v.play(); } catch (e) {}
+    camUi(true); S.timer = setTimeout(tick, 250);
+  };
+
+  $('start').addEventListener('click', start);
+  $('stop').addEventListener('click', stop);
+  $('again').addEventListener('click', () => { $('ficha').hidden = true; $('q').value = ''; window.scrollTo({ top: 0, behavior: 'smooth' }); start(); });
+  $('torch').addEventListener('click', async () => {
+    const t = S.stream && S.stream.getVideoTracks()[0]; if (!t) return;
+    S.torch = !S.torch; try { await t.applyConstraints({ advanced: [{ torch: S.torch }] }); } catch (e) { S.torch = false; }
+    $('torch').setAttribute('aria-pressed', String(S.torch));
+  });
+  $('manual').addEventListener('submit', (e) => { e.preventDefault(); const c = clean($('q').value); if (c) { stop(); show(c); } });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else load(); });
+
+  load();
+})();
+</script>
+</body>
+</html>
