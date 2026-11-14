@@ -53,6 +53,8 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 .manual { display: flex; gap: 8px; }
 .manual input { flex: 1; min-width: 0; font: 16px var(--f-body); padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); }
 .msg { font-size: 0.85rem; color: var(--muted); margin: 0; }
+.dest { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--muted); }
+.dest select { font: 0.85rem var(--f-body); padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); }
 .msg.bad { color: var(--bad); }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
 .pname { font: 600 1.1rem/1.25 var(--f-display); margin: 0; text-wrap: balance; }
@@ -97,6 +99,13 @@ td small { display: block; color: var(--muted); font-size: 0.68rem; }
     <input id="q" inputmode="numeric" autocomplete="off" placeholder="O escribe el código" aria-label="Código de barras">
     <button type="submit">Buscar</button>
   </form>
+  <label class="dest" for="dest">Al escanear, abrir el código en:
+    <select id="dest">
+      <option value="pub">Tablero (enlace público)</option>
+      <option value="edit">Tablero editable (con sesión de Claude)</option>
+      <option value="here">Esta app</option>
+    </select>
+  </label>
   <p class="msg" id="msg" role="status"></p>
 
   <section class="card" id="ficha" hidden>
@@ -137,6 +146,16 @@ td small { display: block; color: var(--muted); font-size: 0.68rem; }
       const d = j.meta.corte ? new Date(j.meta.corte + 'T12:00:00') : null;
       $('corte').textContent = d ? 'Datos al ' + d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : '';
     } catch (e) { $('corte').textContent = 'Sin datos'; say('No se pudieron cargar los datos. Revisa la conexión y vuelve a abrir.', true); }
+  };
+  const DEST = { pub: 'https://claude.ai/artifact/UnZUS6rwnxaQ8wkrWegC5g', edit: 'https://claude.ai/artifact/B5665vU2mQzFCbSSSmzqC8' };
+  try { const d = localStorage.getItem('dest'); if (d) $('dest').value = d; } catch (e) {}
+  $('dest').addEventListener('change', () => { try { localStorage.setItem('dest', $('dest').value); } catch (e) {} });
+  const goBoard = (code) => {
+    const d = $('dest').value;
+    if (!DEST[d]) return false;
+    say('Abriendo el código ' + code + ' en el tablero…');
+    location.href = DEST[d] + '#c' + code;
+    return true;
   };
   const say = (t, bad) => { $('msg').textContent = t || ''; $('msg').classList.toggle('bad', !!bad); };
 
@@ -230,7 +249,7 @@ td small { display: block; color: var(--muted); font-size: 0.68rem; }
           if (S.hits >= 2) {
             $('cam').classList.add('hit'); try { navigator.vibrate && navigator.vibrate(80); } catch (e) {}
             S.busy = false; $('q').value = raw;
-            setTimeout(() => { stop(); show(raw); }, 200); return;
+            setTimeout(() => { stop(); if (!goBoard(raw)) show(raw); }, 200); return;
           }
         }
       } catch (e) {}
